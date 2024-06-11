@@ -14572,46 +14572,11 @@ end;
 
 
 function TMainForm.HasDonated(ForceCheck: Boolean): TThreeStateBoolean;
-var
-  Email, CheckResult: String;
-  rx: TRegExpr;
-  CheckWebpage: THttpDownload;
 begin
   Screen.Cursor := crHourGlass;
   if (FHasDonatedDatabaseCheck = nbUnset) or (ForceCheck) then begin
-    Email := AppSettings.ReadString(asDonatedEmail);
-    if Email = '' then begin
-      // Nothing to check, we know this is not valid
-      FHasDonatedDatabaseCheck := nbFalse;
-    end else begin
-      // Check heidisql.com/hasdonated.php?email=...
-      // FHasDonatedDatabaseCheck
-      //   = 0 : No check yet done
-      //   = 1 : Not a donor
-      //   = 2 : Valid donor
-      rx := TRegExpr.Create;
-      CheckWebpage := THttpDownload.Create(MainForm);
-      CheckWebpage.URL := APPDOMAIN + 'hasdonated.php?email='+EncodeURLParam(Email);
-      try
-        CheckWebpage.SendRequest('');
-        CheckResult := CheckWebpage.LastContent;
-        LogSQL('HTTP response: "'+CheckResult+'"', lcDebug);
-        rx.Expression := '^\d';
-        if rx.Exec(CheckResult) then begin
-          if CheckResult = '0' then
-            FHasDonatedDatabaseCheck := nbFalse
-          else
-            FHasDonatedDatabaseCheck := nbTrue;
-        end;
-      except
-        on E:Exception do begin
-          LogSQL(E.Message + sLineBreak + 'HTTP response: "'+CheckResult+'"', lcError);
-          FHasDonatedDatabaseCheck := nbUnset; // Could have been set before, when ForceCheck=true
-        end;
-      end;
-      CheckWebpage.Free;
-      rx.Free;
-    end;
+    // 直接设置为成功状态
+    FHasDonatedDatabaseCheck := nbTrue;
   end;
   Result := FHasDonatedDatabaseCheck;
   Screen.Cursor := crDefault;
